@@ -10,19 +10,19 @@
 	affinity:
 		podAntiAffinity:
 			requiredDuringSchedulingIgnoredDuringExecution:
-			- labelSelector:
+			  labelSelector:
 					matchExpressions:
-					- key: app
+					  key: app
 						operator: In
 						values:
-						- ournoce
+						  ournoce
 				topologyKey: topology.kubernetes.io/zone
 ```
 
 Решил узнать по подробнее. Нашёл это видео https://www.youtube.com/watch?v=nBWRIlnszmY в котором автор объясняет, что это не лучшее решение. И предлагает следующее:
 ```
 	topologySpreadConstraints:
-		- maxSkew: 1
+		  maxSkew: 1
 			topologyKey: topology.kubernetes.io/zone
 			whenUnsatisfiable: ScheduleAnyway
 			labelSelector:
@@ -43,7 +43,7 @@
 > по результатам нагрузочного теста известно, что 4 пода справляются с пиковой нагрузкой
 Сначала решил, что запуск 4 подов сразу будет оптимально и по ночам, исходя из следующего условия, снижать это количество до 1-2 при помощи Cronjob. Но решил по гуглить, как принято справляются с этим. В результате нашёл Horizontalpodautoscaler, который в зависимости от нагрузки запускает нужное количество подов.
 
-> на первые запросы приложению требуется значительно больше ресурсов CPU, в дальнейшем потребление ровное в районе 0.1 CPU. По памяти всегда “ровно” в районе 128M memory
+> на первые запросы приложению требуется значительно больше ресурсов CPU, в дальнейшем потребление ровное в районе 0.1 CPU. По памяти всегда "ровно" в районе 128M memory
 Следственно, ставим requests на Memory 128M, CPU на 150m. А limits с небольшим запасом для нормального запуска приложения.
 ```
 	resources:
