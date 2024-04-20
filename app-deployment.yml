@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ourapp
+  name: ourapp
+spec:
+  selector:
+    matchLabels:
+      deployment: ourapp
+  ports:
+    - containerPort: 8080
+  template:
+    metadata:
+      labels:
+        app: ourapp
+    spec:
+      containers:
+      - name: ourapp
+        image: ourimage:latest
+        resources:
+          requests:
+            memory: 128M
+            # 150m, а не 100m чтобы 
+            # 1. Был не большой запас. 
+            # 2. Как только нагрузка вырастет до 120m, запустится новый контейнер при помощи Horizontalpodautoscaler
+            cpu: 150m
+          limits:
+            memory: 256M
+            cpu: 1
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        # Так как у нас всего 5 нод, и подов может быть 5. Мне кажется ScheduleAnyway,лучше чем DoNotSchedule.
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: ourapp
+      # Из условия про 5-10 секунд на запуск приложения.
+      readinessProbe:
+        httpGet:
+          path: /
+          port: 8080
+        initialDelaySeconds: 5
+        periodSeconds: 5
